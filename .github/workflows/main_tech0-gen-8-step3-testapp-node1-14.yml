@@ -23,17 +23,25 @@ jobs:
           npm install
           npm run build --if-present
           npm run test --if-present
-        working-directory: ./frontend  # 必要に応じてサブディレクトリを指定
+        working-directory: ./frontend
+
+      - name: Copy artifact for deployment
+        run: |
+          mkdir deploy
+          cp -r ./.next/standalone/. ./deploy
+          cp -r ./public ./deploy
+          cp -r ./.next/static/. ./deploy/.next/static
+        working-directory: ./frontend
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip dist package.json node_modules
-        working-directory: ./app
+        run: zip -r release.zip ./deploy
+        working-directory: ./frontend
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./app/release.zip
+          path: ./frontend/release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -56,6 +64,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'tech0-gen-8-step3-testapp-node1-14'
-          slot-name: 'production'  # 正しいスロット名を確認
-          package: ./dist
+          slot-name: 'production'
+          package: ./deploy
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_15FA9EEB6B364989A0CCC421E35C5127 }}
